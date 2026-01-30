@@ -44,3 +44,15 @@ export async function getCustomers() {
         return []
     }
 }
+export async function deleteCustomer(customerId: string) {
+    try {
+        const db = await getDb()
+        await db.collection("Customer").deleteOne({ _id: new ObjectId(customerId) })
+
+        revalidatePath("/customers")
+        return { success: true }
+    } catch (error: any) {
+        console.error("Customer deletion error:", error)
+        return { success: false, error: error.message }
+    }
+}

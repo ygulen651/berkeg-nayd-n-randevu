@@ -14,10 +14,17 @@ import {
     Filter,
     MoreVertical,
     History,
-    Phone
+    Phone,
+    Trash2
 } from "lucide-react"
-import { getCustomers } from "@/actions/customer-actions"
+import { getCustomers, deleteCustomer } from "@/actions/customer-actions"
 import { AddCustomerDialog } from "@/components/add-customer-dialog"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 export default async function CustomersPage() {
     const customers = await getCustomers()
@@ -83,9 +90,27 @@ export default async function CustomersPage() {
                                             <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600">
                                                 <Phone className="w-4 h-4" />
                                             </Button>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                <MoreVertical className="w-4 h-4" />
-                                            </Button>
+
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                        <MoreVertical className="w-4 h-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <form action={async () => {
+                                                        "use server"
+                                                        await deleteCustomer(customer.id)
+                                                    }}>
+                                                        <DropdownMenuItem className="text-red-600 focus:text-red-600 cursor-pointer">
+                                                            <button type="submit" className="flex items-center w-full">
+                                                                <Trash2 className="w-4 h-4 mr-2" />
+                                                                Müşteriyi Sil
+                                                            </button>
+                                                        </DropdownMenuItem>
+                                                    </form>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
                                         </div>
                                     </TableCell>
                                 </TableRow>

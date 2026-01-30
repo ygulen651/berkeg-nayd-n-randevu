@@ -91,3 +91,17 @@ export async function getTasks() {
         return []
     }
 }
+export async function deleteTask(taskId: string) {
+    try {
+        const db = await getDb()
+        await db.collection("Task").deleteOne({ _id: new ObjectId(taskId) })
+
+        revalidatePath("/tasks")
+        revalidatePath("/dashboard")
+
+        return { success: true }
+    } catch (error: any) {
+        console.error("Task deletion error:", error)
+        return { success: false, error: error.message }
+    }
+}

@@ -5,10 +5,19 @@ import {
     Circle,
     Clock,
     UserCircle,
+    MoreVertical,
+    Trash2
 } from "lucide-react"
-import { getTasks } from "@/actions/task-actions"
+import { getTasks, deleteTask } from "@/actions/task-actions"
 import { getEmployees } from "@/actions/employee-actions"
 import { AddTaskDialog } from "@/components/add-task-dialog"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Button } from "@/components/ui/button"
 
 export default async function TasksPage() {
     const tasks = await getTasks()
@@ -95,13 +104,37 @@ function TaskCard({ task }: { task: any }) {
     }
 
     return (
-        <Card className="shadow-sm border-none bg-white p-3 space-y-3 hover:shadow-md transition-shadow">
-            <div className="flex items-start justify-between gap-2">
+        <Card className="shadow-sm border-none bg-white p-3 space-y-3 hover:shadow-md transition-shadow relative">
+            <div className="flex items-start justify-between gap-2 mr-6">
                 <h4 className="text-sm font-semibold leading-tight">{task.title}</h4>
                 <Badge className={`text-[10px] px-1.5 h-5 shadow-none border-0 ${priorityColors[task.priority]}`}>
                     {task.priority}
                 </Badge>
             </div>
+
+            <div className="absolute top-2 right-2">
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-6 w-6">
+                            <MoreVertical className="w-3.5 h-3.5 text-muted-foreground" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <form action={async () => {
+                            "use server"
+                            await deleteTask(task.id)
+                        }}>
+                            <DropdownMenuItem className="text-red-600 focus:text-red-600 cursor-pointer">
+                                <button type="submit" className="flex items-center w-full">
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Görevi Sil
+                                </button>
+                            </DropdownMenuItem>
+                        </form>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
+
             <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <div className="flex items-center gap-1.5">
                     <UserCircle className="w-3.5 h-3.5" />

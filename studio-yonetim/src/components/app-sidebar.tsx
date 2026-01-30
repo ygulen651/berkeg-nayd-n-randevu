@@ -42,14 +42,14 @@ const menuItems = [
 export function AppSidebar() {
     return (
         <Sidebar>
-            <SidebarHeader className="p-4 border-b">
-                <div className="flex items-center gap-3">
-                    <div className="relative w-full h-12">
+            <SidebarHeader className="p-6 border-b bg-white">
+                <div className="flex items-center justify-center w-full">
+                    <div className="relative w-full h-24 transform hover:scale-105 transition-transform duration-500">
                         <Image
                             src="/YENİ LOGO SİYAH PNG.png"
                             alt="Logo"
                             fill
-                            className="object-contain object-left"
+                            className="object-contain"
                             priority
                         />
                     </div>
