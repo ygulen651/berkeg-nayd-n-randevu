@@ -4,10 +4,17 @@ import {
     Users,
     Mail,
     Phone,
-    MoreVertical
+    MoreVertical,
+    Trash2
 } from "lucide-react"
-import { getEmployees } from "@/actions/employee-actions"
+import { getEmployees, deleteEmployee } from "@/actions/employee-actions"
 import { AddEmployeeDialog } from "@/components/add-employee-dialog"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 export default async function EmployeesPage() {
     const employees = await getEmployees()
@@ -37,12 +44,32 @@ export default async function EmployeesPage() {
                                     </div>
                                     <div>
                                         <CardTitle className="text-lg">{staff.name}</CardTitle>
-                                        <p className="text-sm text-primary font-medium">{staff.role} - {staff.employee?.position || "Pozisyon Belirtilmedi"}</p>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs px-2 py-0.5 bg-slate-200 rounded-full font-semibold">{staff.role}</span>
+                                            <span className="text-xs text-muted-foreground font-medium">{staff.employee?.position || "Pozisyon Belirtilmedi"}</span>
+                                        </div>
                                     </div>
                                 </div>
-                                <Button variant="ghost" size="icon" className="absolute top-4 right-4 h-8 w-8">
-                                    <MoreVertical className="w-4 h-4" />
-                                </Button>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="absolute top-4 right-4 h-8 w-8">
+                                            <MoreVertical className="w-4 h-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <form action={async () => {
+                                            "use server"
+                                            await deleteEmployee(staff.id)
+                                        }}>
+                                            <DropdownMenuItem className="text-red-600 focus:text-red-600 cursor-pointer">
+                                                <button type="submit" className="flex items-center w-full">
+                                                    <Trash2 className="w-4 h-4 mr-2" />
+                                                    Personeli Sil
+                                                </button>
+                                            </DropdownMenuItem>
+                                        </form>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             </CardHeader>
                             <CardContent className="pt-4 space-y-3">
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -51,14 +78,12 @@ export default async function EmployeesPage() {
                                 </div>
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <Phone className="w-4 h-4" />
-                                    {staff.phone}
+                                    {staff.phone || "Telefon Belirtilmedi"}
                                 </div>
-                                <hr className="my-2" />
+                                <hr className="my-2 border-slate-100" />
                                 <div className="flex justify-between items-center">
-                                    <div className="flex -space-x-2">
-                                        {[1, 2, 3].map(i => (
-                                            <div key={i} className="w-6 h-6 rounded-full border-2 border-white bg-slate-200" />
-                                        ))}
+                                    <div className="text-xs text-muted-foreground">
+                                        Eklenme: {new Date(staff.createdAt).toLocaleDateString("tr-TR")}
                                     </div>
                                     <Button variant="outline" size="sm" className="h-8 py-0 px-3 text-xs">
                                         Profil

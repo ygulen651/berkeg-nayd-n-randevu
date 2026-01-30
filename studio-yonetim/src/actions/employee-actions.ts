@@ -9,7 +9,9 @@ export async function createEmployee(formData: any) {
     try {
         const db = await getDb()
 
-        const passwordHash = await bcrypt.hash(formData.password, 10)
+        // Otomatik geçici şifre oluştur (veya formData.password varsa onu kullan)
+        const password = formData.password || "berke123"
+        const passwordHash = await bcrypt.hash(password, 10)
         const userId = new ObjectId()
 
         const userData = {
@@ -18,6 +20,7 @@ export async function createEmployee(formData: any) {
             passwordHash,
             name: formData.name,
             role: formData.role,
+            phone: formData.phone, // Telefon bilgisini ekle
             createdAt: new Date(),
         }
 
@@ -36,10 +39,28 @@ export async function createEmployee(formData: any) {
         revalidatePath("/employees")
         return jsonify({
             success: true,
-            user: { ...userData, id: userId.toString() }
+            user: { ...userData, id: userId.toString() },
+            temporaryPassword: password
         })
     } catch (error: any) {
         console.error("Employee creation error:", error)
+        return { success: false, error: error.message }
+    }
+}
+
+export async function deleteEmployee(userId: string) {
+    try {
+        const db = await getDb()
+        const userOID = new ObjectId(userId)
+
+        // Hem User hem Employee koleksiyonundan sil
+        await db.collection("User").deleteOne({ _id: userOID })
+        await db.collection("Employee").deleteOne({ userId: userOID })
+
+        revalidatePath("/employees")
+        return { success: true }
+    } catch (error: any) {
+        console.error("Employee deletion error:", error)
         return { success: false, error: error.message }
     }
 }
