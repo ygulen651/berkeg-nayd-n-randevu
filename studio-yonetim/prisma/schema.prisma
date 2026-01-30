@@ -1,0 +1,156 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+}
+
+enum Role {
+  ADMIN
+  EMPLOYEE
+  CUSTOMER
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  ON_HOLD
+  COMPLETED
+}
+
+enum ShootStatus {
+  DRAFT
+  PLANNED
+  COMPLETED
+  SELECTION_PENDING
+  EDITING
+  PRINTING
+  DELIVERED
+  CLOSED
+}
+
+model User {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  name          String?
+  email         String?   @unique
+  passwordHash  String
+  role          Role      @default(EMPLOYEE)
+  phone         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  employee      Employee?
+  assignedTasks Task[]    @relation("AssignedTo")
+  createdTasks  Task[]    @relation("CreatedBy")
+  logs          ActivityLog[]
+  shootAssignments ShootAssignment[]
+}
+
+model Employee {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @unique @db.ObjectId
+  user        User     @relation(fields: [userId], references: [id])
+  position    String?
+  isActive    Boolean  @default(true)
+}
+
+model Customer {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  phone       String?
+  email       String?
+  socialMedia String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  shoots      Shoot[]
+}
+
+model Shoot {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  customerId    String      @db.ObjectId
+  customer      Customer    @relation(fields: [customerId], references: [id])
+  title         String
+  type          String?
+  startDateTime DateTime
+  endDateTime   DateTime
+  location      String?
+  package       String?
+  totalPrice    Float       @default(0)
+  deposit       Float       @default(0)
+  status        ShootStatus @default(DRAFT)
+  deliveryDate  DateTime?
+  notes         String?
+  createdAt     DateTime    @default(now())
+
+  assignments   ShootAssignment[]
+  tasks         Task[]
+  payments      Payment[]
+  files         File[]
+}
+
+model ShootAssignment {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  shootId   String @db.ObjectId
+  userId    String @db.ObjectId
+  roleType  String // e.g., "Photographer", "Editor"
+  shoot     Shoot  @relation(fields: [shootId], references: [id])
+  user      User   @relation(fields: [userId], references: [id])
+}
+
+model Task {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  shootId     String?      @db.ObjectId
+  shoot       Shoot?       @relation(fields: [shootId], references: [id])
+  title       String
+  description String?
+  assignedTo  String       @db.ObjectId
+  assignee    User         @relation("AssignedTo", fields: [assignedTo], references: [id])
+  priority    TaskPriority @default(MEDIUM)
+  status      TaskStatus   @default(TODO)
+  deadline    DateTime?
+  createdBy   String       @db.ObjectId
+  creator     User         @relation("CreatedBy", fields: [createdBy], references: [id])
+  createdAt   DateTime     @default(now())
+  files       File[]
+}
+
+model Payment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  shootId   String   @db.ObjectId
+  shoot     Shoot    @relation(fields: [shootId], references: [id])
+  amount    Float
+  date      DateTime @default(now())
+  method    String // Cash, EFT, Credit Card
+  notes     String?
+}
+
+model File {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  shootId     String?  @db.ObjectId
+  shoot       Shoot?   @relation(fields: [shootId], references: [id])
+  taskId      String?  @db.ObjectId
+  task        Task?    @relation(fields: [taskId], references: [id])
+  type        String // LINK or UPLOAD
+  url         String
+  description String?
+  userId      String   @db.ObjectId
+  createdAt   DateTime @default(now())
+}
+
+model ActivityLog {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  entityType String
+  entityId   String
+  message    String
+  userId     String   @db.ObjectId
+  user       User     @relation(fields: [userId], references: [id])
+  createdAt  DateTime @default(now())
+}
