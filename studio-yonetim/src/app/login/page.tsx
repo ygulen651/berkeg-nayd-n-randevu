@@ -12,8 +12,11 @@ export default function LoginPage() {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [isLogin, setIsLogin] = useState(true)
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
+    const [name, setName] = useState("")
+    const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
     const handleGoogleSignIn = async () => {
         setIsLoading(true)
@@ -29,22 +32,42 @@ export default function LoginPage() {
         e.preventDefault()
         setIsLoading(true)
         setError(null)
+        setSuccessMessage(null)
 
         try {
-            const result = await signIn("credentials", {
-                email,
-                password,
-                redirect: false,
-            })
+            if (isLogin) {
+                const result = await signIn("credentials", {
+                    email,
+                    password,
+                    redirect: false,
+                })
 
-            if (result?.error) {
-                setError("Giriş başarısız. Lütfen bilgilerinizi kontrol edin.")
+                if (result?.error) {
+                    setError("Giriş başarısız. Lütfen bilgilerinizi kontrol edin.")
+                } else {
+                    router.push("/dashboard")
+                    router.refresh()
+                }
             } else {
-                router.push("/dashboard")
-                router.refresh()
+                // Registration Logic
+                const res = await fetch("/api/auth/register", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name, email, password }),
+                })
+
+                const data = await res.json()
+
+                if (!res.ok) {
+                    throw new Error(data.message || "Kayıt oluşturulamadı.")
+                }
+
+                setSuccessMessage("Kayıt başarılı! Şimdi giriş yapabilirsiniz.")
+                setIsLogin(true)
+                setPassword("")
             }
-        } catch (err) {
-            setError("Bir hata oluştu. Lütfen tekrar deneyin.")
+        } catch (err: any) {
+            setError(err.message || "Bir hata oluştu. Lütfen tekrar deneyin.")
         } finally {
             setIsLoading(false)
         }
@@ -82,6 +105,11 @@ export default function LoginPage() {
 
                 {/* Minimalist Login Form - Appears subtly */}
                 <div className="w-full max-w-sm space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-500 fill-mode-both">
+                    {successMessage && (
+                        <div className="flex items-center gap-3 bg-green-500/10 border border-green-500/20 text-green-500 p-3 rounded-lg animate-in fade-in slide-in-from-top-1 duration-300">
+                            <p className="text-sm font-medium">{successMessage}</p>
+                        </div>
+                    )}
                     {error && (
                         <div className="flex items-center gap-3 bg-red-500/10 border border-red-500/20 text-red-500 p-3 rounded-lg animate-in fade-in slide-in-from-top-1 duration-300">
                             <AlertCircle className="h-4 w-4 shrink-0" />
@@ -91,6 +119,18 @@ export default function LoginPage() {
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="space-y-4">
+                            {!isLogin && (
+                                <div className="relative group animate-in slide-in-from-left-2 fade-in duration-300">
+                                    <Input
+                                        type="text"
+                                        placeholder="İsim Soyisim"
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        required={!isLogin}
+                                        className="pl-4 h-12 bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:ring-1 focus:ring-white/20 focus:border-white/20 transition-all text-base rounded-full"
+                                    />
+                                </div>
+                            )}
                             <div className="relative group">
                                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-white transition-colors" />
                                 <Input
@@ -124,11 +164,25 @@ export default function LoginPage() {
                                 <Loader2 className="w-5 h-5 animate-spin" />
                             ) : (
                                 <span className="flex items-center gap-2">
-                                    Giriş
+                                    {isLogin ? "Giriş" : "Kayıt Ol"}
                                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                                 </span>
                             )}
                         </Button>
+
+                        <div className="text-center">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsLogin(!isLogin)
+                                    setError(null)
+                                    setSuccessMessage(null)
+                                }}
+                                className="text-sm text-slate-500 hover:text-white transition-colors underline-offset-4 hover:underline"
+                            >
+                                {isLogin ? "Hesabın yok mu? Kayıt Ol" : "Zaten hesabın var mı? Giriş Yap"}
+                            </button>
+                        </div>
 
                         <div className="relative">
                             <div className="absolute inset-0 flex items-center">
